@@ -1,7 +1,7 @@
 {
   "name": "queries",
   "version": "1.0.0",
-  "description": "",
+  "description": "A project demonstrating Claude Agent SDK integration with SQLite database queries",
   "main": "index.js",
   "scripts": {
     "setup": "npm install && node ./scripts/init-claude.js",
