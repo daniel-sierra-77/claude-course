@@ -1,5 +1,8 @@
 import * as ts from "typescript";
 import * as path from "path";
+import { fileURLToPath } from "url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 // Read stdin
 async function readInput() {
@@ -78,7 +81,7 @@ async function main() {
     process.exit(0);
   }
 
-  const typeChecks = runTypeCheck("./tsconfig.json");
+  const typeChecks = runTypeCheck(path.join(__dirname, "../tsconfig.json"));
   if (typeChecks) {
     console.error(typeChecks);
     process.exit(2);
