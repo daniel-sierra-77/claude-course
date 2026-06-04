@@ -35,6 +35,7 @@ export function ChatInterface() {
           </div>
         </ScrollArea>
       )}
+      <div><p>HELLO WORLD</p></div>
       <div className="mt-4 flex-shrink-0">
         <MessageInput
           input={input}
