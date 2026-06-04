@@ -4,10 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-This repo contains two independent course projects that demonstrate different Claude integration patterns:
+This repo contains three independent course projects that demonstrate different Claude integration patterns:
 
 - **`queries/`** — Claude Code hooks + Agent SDK on top of a SQLite e-commerce database (TypeScript)
 - **`uigen/`** — Full-stack AI app (v0.dev clone) built with Next.js + Claude API (TypeScript)
+- **`cli_project/`** — Terminal chatbot with MCP server/client, `@mention` resource injection, and `/command` prompt dispatch (Python)
 
 Each project has its own `CLAUDE.md` with detailed guidance. Read those before working inside a sub-project.
 
@@ -82,3 +83,49 @@ npx prisma generate && npx prisma migrate dev  # after schema changes
 **Database:** Prisma + SQLite (`prisma/dev.db`). Generated client lives in `src/generated/prisma/`. Two models: `User` (email + bcrypt password) and `Project` (messages and VFS state as JSON strings).
 
 **Tests:** Vitest + jsdom. Test files live in `__tests__/` next to their source files.
+
+---
+
+## Project 3: `cli_project/`
+
+### Setup & Commands
+
+```bash
+cd cli_project
+uv venv && source .venv/bin/activate
+uv pip install -e .
+
+# Run the CLI app (starts with the built-in MCP doc server)
+uv run main.py
+
+# Add extra MCP servers at startup
+uv run main.py path/to/extra_server.py
+```
+
+Required `.env`:
+```
+ANTHROPIC_API_KEY=""
+CLAUDE_MODEL=""   # e.g. claude-opus-4-7
+USE_UV=1          # set to 1 when running with uv
+```
+
+No test runner or linter is configured.
+
+### Architecture
+
+A terminal chatbot built with `prompt_toolkit` that connects to one or more MCP servers. Key classes:
+
+| Class | File | Role |
+|---|---|---|
+| `Claude` | `core/claude.py` | Thin Anthropic SDK wrapper; synchronous `chat()`, optional extended thinking |
+| `Chat` | `core/chat.py` | Tool-use loop; manages message history |
+| `CliChat` | `core/cli_chat.py` | Extends `Chat` with `@mention` document injection and `/command` prompt dispatch |
+| `CliApp` | `core/cli.py` | `prompt_toolkit` REPL with Tab completion and inline suggestions |
+| `ToolManager` | `core/tools.py` | Aggregates tools from all MCP clients; dispatches tool calls to the right client |
+| `MCPClient` | `mcp_client.py` | MCP stdio client; `list_prompts`, `get_prompt`, and `read_resource` are TODO stubs |
+
+**MCP server** (`mcp_server.py`) is built with `FastMCP` and exposes a `docs` dict as a document store. It implements `read_doc_contents` and `edit_document` tools plus `docs://documents` and `docs://documents/{doc_id}` resources. Two prompts (rewrite-as-markdown, summarize) are TODO stubs.
+
+**Input formats:**
+- `@mention` — user types `@deposition.md`; `CliChat` strips `@`, fetches the doc from the MCP server, and injects `<document id="...">content</document>` XML into the prompt.
+- `/command` — form `/commandName doc_id` (e.g. `/summarize deposition.md`); dispatches to `MCPClient.get_prompt` and sends the pre-built message chain to Claude.
