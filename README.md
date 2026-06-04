@@ -1,13 +1,13 @@
 # Claude Code AI Courses
 
-Two hands-on projects that teach how to build with Claude Code and the Claude API — from automating developer workflows to shipping a full-stack AI application.
+Three hands-on projects that teach how to build with Claude Code and the Claude API — from automating developer workflows to shipping a full-stack AI application to building a terminal chatbot with MCP.
 
 ---
 
 ## What This Course Teaches
 
 ### Core Theme
-Claude is not just a chat assistant — it is a programmable layer you can embed directly into your development workflow and your products. These two projects cover both sides of that idea.
+Claude is not just a chat assistant — it is a programmable layer you can embed directly into your development workflow and your products. These three projects cover that idea from different angles: automated quality gates, a full AI-powered web app, and a custom MCP-backed CLI.
 
 ---
 
@@ -61,6 +61,27 @@ Two models: `User` (email + bcrypt password) and `Project` (messages and file-sy
 
 ---
 
+## Project 3 — `cli_project/` (MCP Client + Terminal Chatbot)
+
+**What it is:** A `prompt_toolkit` REPL that connects to one or more MCP servers, lets users inject documents via `@mention`, and dispatch pre-built prompt chains via `/command`.
+
+**What it teaches:**
+
+### Building an MCP Client from Scratch
+`mcp_client.py` implements the MCP stdio transport — `list_tools`, `call_tool`, `list_prompts`, `get_prompt`, and `read_resource`. `ToolManager` fans out tool discovery and dispatch across all connected clients. This is the low-level picture of how any MCP host (including Claude Code itself) talks to servers.
+
+### MCP Server with FastMCP
+`mcp_server.py` exposes a `docs` dict as a document store via two tools (`read_doc_contents`, `edit_document`) and two resource URIs (`docs://documents`, `docs://documents/{doc_id}`). The gap between what the server exposes and what the client consumes is intentional — the TODO prompt stubs (rewrite-as-markdown, summarize) are left as exercises.
+
+### Context Injection Patterns
+Two patterns for enriching Claude's context without the user writing raw prompts:
+- **`@mention`** — strips the `@`, fetches the document from the MCP resource endpoint, and injects it as `<document>` XML before the message is sent.
+- **`/command`** — maps a command name to an MCP prompt, fetches the pre-built message chain, and sends it directly to Claude.
+
+**Stack:** Python, `prompt_toolkit`, `FastMCP`, Anthropic SDK (`anthropic`)
+
+---
+
 ## Repository Structure
 
 ```
@@ -68,10 +89,14 @@ Two models: `User` (email + bcrypt password) and `Project` (messages and file-sy
 ├── queries/          # Project 1 — Claude Code hooks + Agent SDK
 │   ├── hooks/        # query_hook.js, read_hook.js, tsc.js
 │   └── src/queries/  # All DB query modules (enforced by hooks)
-└── uigen/            # Project 2 — Full-stack AI app
-    ├── src/app/      # Next.js app router
-    ├── src/lib/      # File system, auth, tools, contexts, prompts
-    └── prisma/       # Schema + migrations
+├── uigen/            # Project 2 — Full-stack AI app
+│   ├── src/app/      # Next.js app router
+│   ├── src/lib/      # File system, auth, tools, contexts, prompts
+│   └── prisma/       # Schema + migrations
+└── cli_project/      # Project 3 — MCP client + terminal chatbot
+    ├── core/         # claude.py, chat.py, cli_chat.py, cli.py, tools.py
+    ├── mcp_client.py # MCP stdio client
+    └── mcp_server.py # FastMCP document store server
 ```
 
 ---
@@ -79,6 +104,7 @@ Two models: `User` (email + bcrypt password) and `Project` (messages and file-sy
 ## Prerequisites
 
 - Node.js 18+
+- Python 3.11+ with `uv` (for `cli_project/`)
 - An Anthropic API key (optional for `uigen/` — mock mode works without one)
 
 ```bash
@@ -88,4 +114,8 @@ cd queries && npm run setup
 # uigen
 cd uigen && npm run setup   # installs deps, generates Prisma client, runs migrations
 npm run dev
+
+# cli_project
+cd cli_project && uv venv && source .venv/bin/activate && uv pip install -e .
+uv run main.py
 ```
