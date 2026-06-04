@@ -23,7 +23,7 @@ def read_document(
 ):
     if doc_id not in docs:
         raise ValueError(f"Doc with id {doc_id} not found")
-        return docs[doc_id]
+    return docs[doc_id]
 
 # TODO: Write a tool to edit a doc
 @mcp.tool(
@@ -34,10 +34,10 @@ def edit_document(
     doc_id:str = Field(description="Id of the document that will be edited"),
     old_str:str = Field(description="The text to replace. Must match exactly including whitespaces"),
     new_str:str = Field(description="The text to replace. Must match exactly including whitespaces")
-)
+):
     if doc_id not in docs:
         raise ValueError(f"Doc with id {doc_id} not found")
-        docs[doc_id] = docs[doc_id].replace(old_str, new_str)
+    docs[doc_id] = docs[doc_id].replace(old_str, new_str)
 
 
 # TODO: Write a resource to return all doc id's
